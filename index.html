@@ -136,68 +136,71 @@
       .paddingInner(1)
       (root);
 
-    // 5) prepara il container e i div per ciascun nodo
-    const chart = d3.select("#chart");
-    let nodes = chart.selectAll(".node")
-      .data(root.descendants())
-      .join("div")
-        .attr("class","node")
-        .style("left",   d=>d.x0+"px")
-        .style("top",    d=>d.y0+"px")
-        .style("width",  d=>Math.max(0,d.x1-d.x0)+"px")
-        .style("height", d=>Math.max(0,d.y1-d.y0)+"px")
-        .style("background-color", d=>d.data.color)
-        .on("click", clicked)
-      .append("div")
-        .attr("class","label")
-        .text(d=>d.depth===1?d.data.name:d.data.name);
+    <script>
+  // … dichiara data, root, treemap layout come prima …
 
-    // stato corrente (root o macro‐nodo)
-    let current = root;
+  // 5) Preparo i container (nodeContainers) e le label
+  const chart = d3.select("#chart");
 
-    // mostra inizialmente solo depth===1
-    updateDisplay();
-
-    // click handler
-    function clicked(event, d) {
-      event.stopPropagation();
-      if (d.depth === 1) {
-        current = d;
-      }
-      zoom(d);
-      updateDisplay();
-    }
-
-    // click sul background resetta
-    d3.select("body").on("click", ()=>{
-      current = root;
-      zoom(root);
-      updateDisplay();
-    });
-
-    // funzione che aggiorna display: quali rect visibili
-    function updateDisplay() {
-      nodes.style("display", d => {
-        if (current === root) {
-          return d.depth === 1 ? "block" : "none";
-        } else {
-          return d.depth === 2 && d.parent === current ? "block" : "none";
-        }
+  // container .node, con click handler
+  const nodeContainers = chart.selectAll(".node")
+    .data(root.descendants())
+    .join("div")
+      .attr("class","node")
+      .style("left",   d=>d.x0+"px")
+      .style("top",    d=>d.y0+"px")
+      .style("width",  d=>Math.max(0,d.x1-d.x0)+"px")
+      .style("height", d=>Math.max(0,d.y1-d.y0)+"px")
+      .style("background-color", d=>d.data.color)
+      .on("click", (event, d) => {
+        event.stopPropagation();
+        if (d.depth === 1) current = d;
+        zoom(d);
+        updateDisplay();
       });
-    }
 
-    // funzione zoom (rimappa pos/size relativamente al nodo d)
-    function zoom(d) {
-      const x0 = d.x0, y0 = d.y0,
-            kx = width  / (d.x1 - d.x0),
-            ky = height / (d.y1 - d.y0);
+  // label dentro ogni container
+  nodeContainers.append("div")
+      .attr("class","label")
+      .style("pointer-events","none")
+      .text(d=> d.data.name);
 
-      nodes.transition().duration(750)
-        .style("left",   d=>((d.x0 - x0)*kx)+"px")
-        .style("top",    d=>((d.y0 - y0)*ky)+"px")
-        .style("width",  d=>Math.max(0,(d.x1 - d.x0)*kx)+"px")
-        .style("height", d=>Math.max(0,(d.y1 - d.y0)*ky)+"px");
-    }
-  </script>
+  // stato corrente (root o macro‐nodo)
+  let current = root;
+
+  // mostra inizialmente solo depth===1
+  updateDisplay();
+
+  // click sul background resetta
+  d3.select("body").on("click", () => {
+    current = root;
+    zoom(root);
+    updateDisplay();
+  });
+
+  // aggiorna quali container sono visibili
+  function updateDisplay() {
+    nodeContainers.style("display", d => {
+      if (current === root) {
+        return d.depth === 1 ? "block" : "none";
+      } else {
+        return d.depth === 2 && d.parent === current ? "block" : "none";
+      }
+    });
+  }
+
+  // zoom (riporta pos/size relativamente al nodo d)
+  function zoom(d) {
+    const x0 = d.x0, y0 = d.y0,
+          kx = width  / (d.x1 - d.x0),
+          ky = height / (d.y1 - d.y0);
+
+    nodeContainers.transition().duration(750)
+      .style("left",   d=>((d.x0 - x0)*kx)+"px")
+      .style("top",    d=>((d.y0 - y0)*ky)+"px")
+      .style("width",  d=>Math.max(0,(d.x1 - d.x0)*kx)+"px")
+      .style("height", d=>Math.max(0,(d.y1 - d.y0)*ky)+"px");
+  }
+</script>
 </body>
 </html>
