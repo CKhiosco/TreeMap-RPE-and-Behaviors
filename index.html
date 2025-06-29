@@ -7,100 +7,87 @@
     html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; }
     #chart { position:relative; width:100%; height:100%; font-family:sans-serif; }
     .node {
-      position:absolute; box-sizing:border-box; overflow:hidden;
-      border:1px solid white; cursor:pointer;
+      position:absolute;
+      box-sizing:border-box;
+      overflow:hidden;
+      border:1px solid white;
+      cursor:pointer;
     }
     .label {
-      pointer-events:none; font-size:12px; line-height:1.1em;
-      padding:4px; color:white; text-shadow:0 0 3px rgba(0,0,0,0.7);
+      font-size:12px;
+      line-height:1.1em;
+      padding:4px;
+      color:white;
+      text-shadow:0 0 3px rgba(0,0,0,0.7);
+      pointer-events:none;    /* lascia passare il click al div.node */
       word-break:break-word;
     }
   </style>
 </head>
 <body>
   <div id="chart"></div>
-
   <script src="https://d3js.org/d3.v6.min.js"></script>
   <script>
-    // 1) Dati gerarchici a due livelli
+    // 1) dati gerarchici
     const data = {
       name: "root",
       children: [
-        { name:"Excuse-Making",                  color:"#ff0000",
-          children:[
+        { name:"Excuse-Making", color:"#ff0000", children:[
             {name:"Faking the need to adjust swimming equipment", value:33},
-            {name:"Verbal excuses to swim less",                 value:4},
-            {name:"Verbal excuses to swim slower",               value:6},
-            {name:"Verbal excuses to start swimming later",      value:15}
-          ]
-        },
-        { name:"Social Distraction",               color:"#cc3300",
-          children:[
-            {name:"Talking with peers instead of swimming",     value:130}
-          ]
-        },
-        { name:"Effort Minimization",              color:"#ff6633",
-          children:[
-            {name:"Letting peers go first to get the draft",   value:30},
-            {name:"Asking for longer breaks between sets",     value:11},
-            {name:"Changing the drill to make it easier",      value:23}
-          ]
-        },
-        { name:"Skipping Lengths",                 color:"#ff6633",
-          children:[
-            {name:"Skipping lengths to chat",                 value:120},
-            {name:"Skipping lengths trying to hide from coach",value:400},
+            {name:"Verbal excuses to swim less",                value:4},
+            {name:"Verbal excuses to swim slower",              value:6},
+            {name:"Verbal excuses to start swimming later",     value:15}
+        ]},
+        { name:"Social Distraction", color:"#cc3300", children:[
+            {name:"Talking with peers instead of swimming", value:130}
+        ]},
+        { name:"Effort Minimization", color:"#ff6633", children:[
+            {name:"Letting peers go first to get the draft", value:30},
+            {name:"Asking for longer breaks between sets",   value:11},
+            {name:"Changing the drill to make it easier",    value:23}
+        ]},
+        { name:"Skipping Lengths", color:"#ff6633", children:[
+            {name:"Skipping lengths to chat",                   value:120},
+            {name:"Skipping lengths trying to hide from coach", value:400},
             {name:"Starting the exercise later than the others",value:30},
-            {name:"Going to the toilet to skip lengths",      value:10}
-          ]
-        },
-        { name:"Behavioral Resistance",            color:"#cc3300",
-          children:[
-            {name:"Restlessly responding to coach",            value:8},
-            {name:"Negatively responding when asked to go first",value:13},
-            {name:"Restlessness toward peers",                 value:9}
-          ]
-        },
-        { name:"Reacting at Coach Instructions",   color:"#ff6633",
-          children:[
-            {name:"Give a black look to coach for the exercise",value:147},
-            {name:"Grimaces and gestures of laziness",         value:110},
-            {name:"Grimaces and gestures of disappointment",   value:35},
-            {name:"Restlessness toward coach",                 value:21},
-            {name:"Shaking the head in response to exercise",  value:35},
-            {name:"Grimaces and gestures of fear and nervousness",value:20},
-            {name:"Grimaces and gestures of boredom",          value:5},
-            {name:"Verbally complaining for the exercise",     value:65},
-            {name:"Negatively responding to corrections",      value:120},
-            {name:"Refusing to do the main set",               value:2}
-          ]
-        },
-        { name:"Peer Disengagement Influence",      color:"#cc3300",
-          children:[
+            {name:"Going to the toilet to skip lengths",        value:10}
+        ]},
+        { name:"Behavioral Resistance", color:"#cc3300", children:[
+            {name:"Restlessly responding to coach",           value:8},
+            {name:"Negatively responding when asked to go first", value:13},
+            {name:"Restlessness toward peers",                value:9}
+        ]},
+        { name:"Reacting at Coach Instructions", color:"#ff6633", children:[
+            {name:"Give a black look to coach for the exercise", value:147},
+            {name:"Grimaces and gestures of laziness",          value:110},
+            {name:"Grimaces and gestures of disappointment",    value:35},
+            {name:"Restlessness toward coach",                  value:21},
+            {name:"Shaking the head in response to exercise",   value:35},
+            {name:"Grimaces and gestures of fear and nervousness", value:20},
+            {name:"Grimaces and gestures of boredom",           value:5},
+            {name:"Verbally complaining for the exercise",      value:65},
+            {name:"Negatively responding to corrections",       value:120},
+            {name:"Refusing to do the main set",                value:2}
+        ]},
+        { name:"Peer Disengagement Influence", color:"#cc3300", children:[
             {name:"Convincing others to skip lengths", value:15},
             {name:"Convincing others to go slower",     value:6},
             {name:"Convincing others to waste time",    value:9}
-          ]
-        },
-        { name:"Low Resilience Behaviors",          color:"#ff0000",
-          children:[
-            {name:"Sentences or gestures as 'I can\\'t do it'",value:75},
-            {name:"Complaining with peers",                value:35},
-            {name:"Asking how many sets are left",         value:20},
+        ]},
+        { name:"Low Resilience Behaviors", color:"#ff0000", children:[
+            {name:"Sentences or gestures as 'I can\\'t do it'", value:75},
+            {name:"Complaining with peers",                    value:35},
+            {name:"Asking how many sets are left",             value:20},
             {name:"Sentences or gestures as 'I wanna go home'",value:7}
-          ]
-        },
-        { name:"Support and Motivate Peers",        color:"#a1d99b",
-          children:[
+        ]},
+        { name:"Support and Motivate Peers", color:"#a1d99b", children:[
             {name:"Looking for peer emotional support", value:30},
             {name:"High five with peers",                 value:82},
             {name:"Cheering for peers",                   value:33},
             {name:"Smiling for peers performance",        value:5},
             {name:"Challenging a peer",                   value:8}
-          ]
-        },
-        { name:"Committed Effort",                  color:"#a1d99b",
-          children:[
+        ]},
+        { name:"Committed Effort", color:"#a1d99b", children:[
             {name:"Embracing coach technical corrections",    value:11},
             {name:"Commenting positively on one’s performance",value:8},
             {name:"Immediately starting the exercise",         value:33},
@@ -108,99 +95,84 @@
             {name:"Doing the exercise the hardest way",       value:12},
             {name:"Being tired but continuing to push",       value:8},
             {name:"Being focused and ready",                  value:9}
-          ]
-        },
-        { name:"Relaxed Atmosphere",                color:"#a1d99b",
-          children:[
-            {name:"Patting peers on the back",           value:22},
-            {name:"Worrying for a peer",                 value:5},
-            {name:"Jokes between peers",                 value:75},
-            {name:"Jokes with coach",                    value:63}
-          ]
-        }
+        ]},
+        { name:"Relaxed Atmosphere", color:"#a1d99b", children:[
+            {name:"Patting peers on the back",          value:22},
+            {name:"Worrying for a peer",                value:5},
+            {name:"Jokes between peers",                value:75},
+            {name:"Jokes with coach",                   value:63}
+        ]}
       ]
     };
 
-    // 2) impostazioni base
+    // 2) dimensioni
     const width  = window.innerWidth,
           height = window.innerHeight;
 
-    // 3) gerarchia completa
+    // 3) gerarchia + treemap layout
     const root = d3.hierarchy(data)
-      .sum(d => d.value)
-      .sort((a,b) => b.value - a.value);
+                   .sum(d=>d.value)
+                   .sort((a,b)=>b.value - a.value);
 
-    // 4) calcola layout treemap una volta per tutti
-    d3.treemap()
-      .size([width, height])
-      .paddingInner(1)
-      (root);
+    d3.treemap().size([width,height]).paddingInner(1)(root);
 
-    <script>
-  // … dichiara data, root, treemap layout come prima …
+    // 4) container e nodi
+    const chart = d3.select("#chart");
 
-  // 5) Preparo i container (nodeContainers) e le label
-  const chart = d3.select("#chart");
+    // salvo tutti i div.node in nodeContainers
+    const nodeContainers = chart.selectAll(".node")
+      .data(root.descendants())
+      .join("div")
+        .attr("class","node")
+        .style("left",   d=>d.x0+"px")
+        .style("top",    d=>d.y0+"px")
+        .style("width",  d=>Math.max(0,d.x1-d.x0)+"px")
+        .style("height", d=>Math.max(0,d.y1-d.y0)+"px")
+        .style("background-color", d=>d.data.color)
+        .on("click",(event,d)=>{
+          event.stopPropagation();
+          if(d.depth===1){
+            current = d;
+            zoom(d);
+            updateDisplay();
+          }
+        });
 
-  // container .node, con click handler
-  const nodeContainers = chart.selectAll(".node")
-    .data(root.descendants())
-    .join("div")
-      .attr("class","node")
-      .style("left",   d=>d.x0+"px")
-      .style("top",    d=>d.y0+"px")
-      .style("width",  d=>Math.max(0,d.x1-d.x0)+"px")
-      .style("height", d=>Math.max(0,d.y1-d.y0)+"px")
-      .style("background-color", d=>d.data.color)
-      .on("click", (event, d) => {
-        event.stopPropagation();
-        if (d.depth === 1) current = d;
-        zoom(d);
-        updateDisplay();
-      });
-
-  // label dentro ogni container
-  nodeContainers.append("div")
+    // aggiungo le label dopo aver creato i container
+    nodeContainers.append("div")
       .attr("class","label")
-      .style("pointer-events","none")
-      .text(d=> d.data.name);
+      .text(d=>d.data.name);
 
-  // stato corrente (root o macro‐nodo)
-  let current = root;
-
-  // mostra inizialmente solo depth===1
-  updateDisplay();
-
-  // click sul background resetta
-  d3.select("body").on("click", () => {
-    current = root;
-    zoom(root);
+    // stato corrente e funzione di update
+    let current = root;
     updateDisplay();
-  });
 
-  // aggiorna quali container sono visibili
-  function updateDisplay() {
-    nodeContainers.style("display", d => {
-      if (current === root) {
-        return d.depth === 1 ? "block" : "none";
-      } else {
-        return d.depth === 2 && d.parent === current ? "block" : "none";
-      }
+    // reset sullo sfondo
+    d3.select("body").on("click",()=>{
+      current = root;
+      zoom(root);
+      updateDisplay();
     });
-  }
 
-  // zoom (riporta pos/size relativamente al nodo d)
-  function zoom(d) {
-    const x0 = d.x0, y0 = d.y0,
-          kx = width  / (d.x1 - d.x0),
-          ky = height / (d.y1 - d.y0);
+    function updateDisplay(){
+      nodeContainers.style("display", d=>{
+        return current===root
+          ? (d.depth===1 ? "block" : "none")
+          : (d.depth===2 && d.parent===current ? "block" : "none");
+      });
+    }
 
-    nodeContainers.transition().duration(750)
-      .style("left",   d=>((d.x0 - x0)*kx)+"px")
-      .style("top",    d=>((d.y0 - y0)*ky)+"px")
-      .style("width",  d=>Math.max(0,(d.x1 - d.x0)*kx)+"px")
-      .style("height", d=>Math.max(0,(d.y1 - d.y0)*ky)+"px");
-  }
-</script>
+    function zoom(d){
+      const x0 = d.x0, y0 = d.y0,
+            kx = width/(d.x1-d.x0),
+            ky = height/(d.y1-d.y0);
+
+      nodeContainers.transition().duration(750)
+        .style("left",   d=>((d.x0-x0)*kx)+"px")
+        .style("top",    d=>((d.y0-y0)*ky)+"px")
+        .style("width",  d=>Math.max(0,(d.x1-d.x0)*kx)+"px")
+        .style("height", d=>Math.max(0,(d.y1-d.y0)*ky)+"px");
+    }
+  </script>
 </body>
 </html>
