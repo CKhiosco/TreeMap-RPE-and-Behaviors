@@ -1,1 +1,165 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>Treemap Drill-down – Comportamenti nel nuoto</title>
+  <style>
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; }
+    #chart { position:relative; width:100%; height:100%; font-family:sans-serif; }
+    .node {
+      position:absolute;
+      box-sizing:border-box;
+      overflow:hidden;
+      border:1px solid white;
+      cursor:pointer;
+    }
+    .label {
+      font-size:12px;
+      line-height:1.1em;
+      padding:4px;
+      color:white;
+      text-shadow:0 0 3px rgba(0,0,0,0.7);
+      pointer-events:none;
+      word-break:break-word;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script>
+    // 1) Dati gerarchici tradotti in italiano
+    const data = {
+      children: [
+        { name:"Trovare scuse", color:"#ff0000", children:[
+            {name:"Fingere di dover sistemare l’attrezzatura da nuoto", value:33},
+            {name:"Scuse verbali per nuotare meno",                    value:4},
+            {name:"Scuse verbali per nuotare più lentamente",          value:6},
+            {name:"Scuse verbali per iniziare a nuotare più tardi",    value:15}
+        ]},
+        { name:"Distrazione sociale", color:"#cc3300", children:[
+            {name:"Parlare con i pari invece di nuotare", value:130}
+        ]},
+        { name:"Minimizzazione dello sforzo", color:"#ff6633", children:[
+            {name:"Lasciare partire prima i pari per sfruttare la scia", value:30},
+            {name:"Chiedere pause più lunghe tra le serie",             value:11},
+            {name:"Modificare l’esercizio per renderlo più facile",     value:23}
+        ]},
+        { name:"Saltare le ripetute", color:"#ff6633", children:[
+            {name:"Saltare vasche per chiacchierare",                      value:120},
+            {name:"Saltare vasche cercando di nascondersi dall’allenatore", value:400},
+            {name:"Iniziare l’esercizio più tardi degli altri",             value:30},
+            {name:"Andare in bagno per saltare vasche",                     value:10}
+        ]},
+        { name:"Resistenza comportamentale", color:"#cc3300", children:[
+            {name:"Rispondere in modo agitato all’allenatore",             value:8},
+            {name:"Rispondere negativamente quando viene chiesto di partire per primi", value:13},
+            {name:"Agitazione verso i pari",                               value:9}
+        ]},
+        { name:"Reagire alle istruzioni dell’allenatore", color:"#ff6633", children:[
+            {name:"Guardare male l’allenatore per l’esercizio",             value:147},
+            {name:"Smorfie e gesti di pigrizia",                            value:110},
+            {name:"Smorfie e gesti di delusione",                            value:35},
+            {name:"Agitazione verso l’allenatore",                           value:21},
+            {name:"Scuotere la testa in risposta all’esercizio",             value:35},
+            {name:"Smorfie e gesti di paura e nervosismo",                   value:20},
+            {name:"Smorfie e gesti di noia",                                 value:5},
+            {name:"Lamentarsi verbalmente per l’esercizio",                  value:65},
+            {name:"Rispondere negativamente alle correzioni",                value:120},
+            {name:"Rifiutarsi di fare la serie principale",                  value:2}
+        ]},
+        { name:"Influenza negativa sui pari", color:"#cc3300", children:[
+            {name:"Convincere gli altri a saltare vasche",              value:15},
+            {name:"Convincere gli altri ad andare più lentamente",      value:6},
+            {name:"Convincere gli altri a perdere tempo",               value:9}
+        ]},
+        { name:"Comportamenti di bassa resilienza", color:"#ff0000", children:[
+            {name:"Frasi o gesti come “Non ce la faccio”",        value:75},
+            {name:"Lamentarsi con i pari",                         value:35},
+            {name:"Chiedere quante serie mancano",                 value:20},
+            {name:"Frasi o gesti come “Voglio andare a casa”",     value:7}
+        ]},
+        { name:"Supportare e motivare i pari", color:"#a1d99b", children:[
+            {name:"Cercare supporto emotivo dai pari", value:30},
+            {name:"Dare il cinque ai pari",             value:82},
+            {name:"Fare il tifo per i pari",            value:33},
+            {name:"Sorridere per la prestazione dei pari", value:5},
+            {name:"Sfidare un pari",                    value:8}
+        ]},
+        { name:"Impegno", color:"#a1d99b", children:[
+            {name:"Accogliere le correzioni tecniche dell’allenatore", value:11},
+            {name:"Commentare positivamente la propria prestazione",   value:8},
+            {name:"Iniziare subito l’esercizio",                       value:33},
+            {name:"Essere il primo a entrare in acqua",                value:3},
+            {name:"Fare l’esercizio nel modo più difficile",           value:12},
+            {name:"Essere stanco ma continuare a spingere",            value:8},
+            {name:"Essere concentrato e pronto",                       value:9}
+        ]},
+        { name:"Clima rilassato", color:"#a1d99b", children:[
+            {name:"Dare pacche sulla schiena ai pari", value:22},
+            {name:"Preoccuparsi per un pari",          value:5},
+            {name:"Scherzi tra pari",                  value:75},
+            {name:"Scherzi con l’allenatore",          value:63}
+        ]}
+      ]
+    };
+
+    // 2) Dimensioni del chart
+    const width  = window.innerWidth,
+          height = window.innerHeight;
+
+    const chart = d3.select("#chart");
+
+    // Funzione per disegnare un treemap a partire da un nodo dati
+    function draw(nodeDatum) {
+      // 1. Costruisco un root temporaneo con children = nodeDatum.children
+      const tmp = d3.hierarchy({children: nodeDatum.children})
+        .sum(d => d.value)
+        .sort((a,b) => b.value - a.value);
+
+      // 2. Calcolo layout
+      d3.treemap().size([width,height]).paddingInner(1)(tmp);
+
+      // 3. Bind dei dati con i rettangoli di primo livello di tmp
+      const nodes = chart.selectAll(".node")
+        .data(tmp.children, d => d.data.name);
+
+      // 4. Enter + update + exit
+      nodes.join(
+        enter => enter.append("div")
+          .attr("class","node")
+          .style("background-color", d => d.data.color || nodeDatum.color)
+          .style("left",   d => d.x0 + "px")
+          .style("top",    d => d.y0 + "px")
+          .style("width",  d => Math.max(0, d.x1 - d.x0) + "px")
+          .style("height", d => Math.max(0, d.y1 - d.y0) + "px")
+          .on("click", (event, d) => {
+            event.stopPropagation();
+            if (d.children) draw(d.data);
+          })
+          .call(enter => enter.append("div")
+            .attr("class","label")
+            .text(d => d.data.name)
+          ),
+        update => update
+          .transition().duration(500)
+            .style("left",   d => d.x0 + "px")
+            .style("top",    d => d.y0 + "px")
+            .style("width",  d => Math.max(0, d.x1 - d.x0) + "px")
+            .style("height", d => Math.max(0, d.y1 - d.y0) + "px")
+            .style("background-color", d => d.data.color || nodeDatum.color),
+        exit => exit.remove()
+      );
+    }
+
+    // 3) Click sul background: torna alla root
+    d3.select("body").on("click", () => draw(data));
+
+    // 4) Disegno iniziale, macro-livello
+    draw(data);
+
+  </script>
+</body>
+</html>
+
 
